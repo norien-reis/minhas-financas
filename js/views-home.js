@@ -79,6 +79,19 @@
         'Você pode ver o que pede atenção primeiro e montar um plano no seu ritmo.</p>' +
         '<button class="btn small" data-act="go" data-to="#dividas">Ver situação e plano</button></section>';
     }
+    // Lembrete gentil de backup (dados reais, sem backup há mais de 7 dias)
+    const st = this.s;
+    const records = st.expenses.length + st.incomes.length + st.cardPurchases.length + st.loans.length;
+    if (!st.isDemo && records > 0) {
+      const lb = st.settings.lastBackup;
+      const days = lb ? Calc.daysBetween(lb.slice(0, 10), this.today()) : null;
+      const changedSince = !lb || (st.updatedAt && st.updatedAt > lb);
+      if (changedSince && (days === null || days >= 7)) {
+        h += '<section class="card soft-warn small backup-tip"><strong>💾 ' + (days === null ? 'Você ainda não fez backup.' : 'Seu último backup foi há ' + days + ' dias.') + '</strong>' +
+          '<p>Seus dados ficam só neste aparelho. Um backup protege contra perda e serve para levar tudo para o celular ou o computador.</p>' +
+          '<button class="btn small" data-act="go" data-to="#dados">Fazer backup / enviar para outro aparelho</button></section>';
+      }
+    }
     if (!s.hasData) {
       h += '<section class="card"><h3>Mês sem lançamentos</h3><p class="muted">Cadastre seu salário e suas contas para ver o resumo de ' + U.monthLabel(this.month) + '.</p>' +
         '<div class="btn-row"><button class="btn" data-act="addIncome">+ Entrada</button><button class="btn primary" data-act="addExpense">+ Gasto</button></div></section>';

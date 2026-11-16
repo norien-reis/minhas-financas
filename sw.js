@@ -1,6 +1,6 @@
 /* Service worker: guarda os arquivos da ferramenta para abrir offline.
    Não guarda nem envia dados financeiros (eles ficam no localStorage/IndexedDB). */
-const CACHE = 'financas-v1';
+const CACHE = 'financas-v2';
 const FILES = [
   './', './index.html', './manifest.webmanifest', './css/app.css',
   './js/calc.js', './js/util.js', './js/store.js', './js/ocr.js', './js/demo.js', './js/forms.js', './js/app.js',

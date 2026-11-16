@@ -129,7 +129,17 @@
   /* ---------------- Backup e dados ---------------- */
   App.views.dados = function () {
     const last = this.s.settings.lastBackup;
+    const canShare = shareSupported();
     return '<a href="#mais" class="back">‹ Mais</a><h2>Backup e dados</h2>' +
+      '<section class="card"><h3>📲 Levar para outro aparelho</h3>' +
+      '<p class="small">Os dados <strong>não sincronizam sozinhos</strong>: cada aparelho guarda os seus. Para ver no celular o que você cadastrou aqui (ou o contrário):</p>' +
+      '<ol class="small steps"><li>Toque em <strong>Enviar para outro aparelho</strong> e escolha WhatsApp (a conversa “Você”/“Mensagem para mim”), Google Drive ou e-mail.</li>' +
+      '<li>No outro aparelho, abra o app → <strong>Mais → Backup e dados → Restaurar backup</strong> e escolha o arquivo recebido.</li></ol>' +
+      '<div class="stack"><button class="btn primary block" data-act="shareData">' + (canShare ? 'Enviar para outro aparelho' : 'Baixar arquivo para enviar') + '</button>' +
+      '<button class="btn block ghost" data-act="shareData" data-photos="1">' + (canShare ? 'Enviar' : 'Baixar') + ' com as fotos dos comprovantes (arquivo maior)</button></div>' +
+      '<p class="soft-warn small">⚠️ Restaurar <strong>substitui</strong> tudo no aparelho que recebe (não junta). Escolha um aparelho principal para cadastrar e use o outro para consultar.</p>' +
+      (canShare ? '' : '<p class="muted tiny">Este navegador não abre o menu de compartilhamento; o arquivo é baixado e você o envia pelo WhatsApp Web, Drive ou e-mail.</p>') +
+      '<p class="muted tiny">Dados deste aparelho alterados pela última vez em <strong>' + (this.s.updatedAt ? dateTime(this.s.updatedAt) : '—') + '</strong>.</p></section>' +
       '<section class="card"><h3>Onde seus dados ficam</h3>' +
       '<ul class="small"><li>Os lançamentos ficam no <strong>armazenamento local deste navegador</strong> (localStorage), <strong>somente neste aparelho</strong>.</li>' +
       '<li>As fotos ficam no banco local do navegador (IndexedDB), também só neste aparelho.</li>' +
@@ -142,7 +152,8 @@
       '<div class="stack"><button class="btn primary block" data-act="exportData">Baixar backup (sem fotos)</button><button class="btn block" data-act="exportData" data-photos="1">Baixar backup com fotos (arquivo maior)</button></div>' +
       '<p class="muted tiny">O arquivo não é criptografado. Guarde em local de confiança.</p></section>' +
       '<section class="card"><h3>Restaurar backup</h3><p class="small">Substitui os dados atuais deste aparelho pelos do arquivo.</p>' +
-      '<label class="btn block">Escolher arquivo de backup<input type="file" accept="application/json,.json" hidden data-import></label></section>' +
+      '<label class="btn block">Escolher arquivo de backup<input type="file" accept="' + this.BACKUP_ACCEPT + '" hidden data-import></label>' +
+      '<p class="muted tiny">Aceita arquivos <strong>.json</strong> ou <strong>.txt</strong> gerados por esta ferramenta.</p></section>' +
       '<section class="card"><h3>Recomeçar</h3><div class="stack">' +
       (this.s.isDemo ? '<button class="btn block danger" data-act="clearDemo">Apagar dados de exemplo e começar do zero</button>' : '<button class="btn block ghost" data-act="loadDemo">Ver dados de exemplo (substitui os atuais)</button>') +
       '<button class="btn block danger ghost" data-act="wipe">Apagar todos os dados deste aparelho</button></div></section>';
@@ -191,25 +202,47 @@
     editCat(el) { catForm(this, this.s.categories.find((c) => c.id === el.dataset.id)); },
     async exportData(el) {
       const withPhotos = !!el.dataset.photos;
-      const data = await Store.exportData(withPhotos);
-      const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'backup-financas-' + this.today() + (withPhotos ? '-com-fotos' : '') + '.json';
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-      this.s.settings.lastBackup = new Date().toISOString(); this.save();
+      const file = await backupFile(this, withPhotos, false);
+      downloadFile(file);
+      markBackup(this);
       this.toast('Backup gerado. Guarde o arquivo em local seguro.');
+    },
+    // Enviar para outro aparelho: abre o menu de compartilhamento do sistema (WhatsApp, Drive, e-mail...).
+    // Se o navegador não permitir, baixa o arquivo.
+    async shareData(el) {
+      const withPhotos = !!el.dataset.photos;
+      const file = await backupFile(this, withPhotos, true);
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file] });
+          markBackup(this);
+          this.toast('Arquivo enviado. No outro aparelho: Mais → Backup e dados → Restaurar backup.');
+          return;
+        } catch (e) {
+          if (e && e.name === 'AbortError') return; // a pessoa cancelou
+          // Outros erros (ex.: permissão expirou): cai para o download
+        }
+      }
+      downloadFile(file);
+      markBackup(this);
+      this.toast('Arquivo baixado. Envie pelo WhatsApp, Drive ou e-mail e restaure no outro aparelho.');
     },
     async importFile(input) {
       const f = input.files && input.files[0]; if (!f) return;
       input.value = '';
       let obj;
-      try { obj = JSON.parse(await f.text()); } catch (e) { return this.toast('Não foi possível ler o arquivo.', 'erro'); }
+      try { obj = JSON.parse(await f.text()); } catch (e) { return this.toast('Não foi possível ler o arquivo. Ele precisa ser um backup gerado por esta ferramenta.', 'erro'); }
       const err = Store.validateBackup(obj); if (err) return this.toast(err, 'erro');
       const d = obj.data;
-      const ok = !this.s || await F.confirm({ title: 'Restaurar backup?', ok: 'Restaurar', danger: true,
-        html: '<p>Backup de <strong>' + U.date((obj.exportedAt || '').slice(0, 10)) + '</strong>: ' + (d.expenses || []).length + ' despesas, ' + (d.incomes || []).length + ' entradas, ' + (d.cards || []).length + ' cartões, ' + (d.loans || []).length + ' empréstimos' + (obj.photos && Object.keys(obj.photos).length ? ', ' + Object.keys(obj.photos).length + ' fotos' : '') + '.</p><p>Os dados atuais deste aparelho serão <strong>substituídos</strong>.</p>' });
+      const backupTime = obj.exportedAt || '';
+      const localTime = this.s && this.s.updatedAt;
+      // Aviso: este aparelho tem alterações mais recentes que o backup
+      const newerHere = this.s && !this.s.isDemo && localTime && backupTime && localTime > backupTime;
+      const localCount = this.s ? this.s.expenses.length + this.s.incomes.length + this.s.cardPurchases.length + this.s.loans.length : 0;
+      const ok = !this.s || await F.confirm({ title: 'Restaurar backup?', ok: newerHere ? 'Restaurar mesmo assim' : 'Restaurar', danger: true,
+        html: '<p>Backup gerado em <strong>' + dateTime(backupTime) + '</strong>: ' + U.plural((d.expenses || []).length, 'despesa', 'despesas') + ', ' + U.plural((d.incomes || []).length, 'entrada', 'entradas') + ', ' + U.plural((d.cardPurchases || []).length, 'compra no cartão', 'compras no cartão') + ', ' + U.plural((d.loans || []).length, 'empréstimo', 'empréstimos') + (obj.photos && Object.keys(obj.photos).length ? ', ' + U.plural(Object.keys(obj.photos).length, 'foto', 'fotos') : '') + '.</p>' +
+          (newerHere ? '<p class="soft-warn small">⚠️ Este aparelho tem alterações feitas em <strong>' + dateTime(localTime) + '</strong>, <strong>depois</strong> desse backup. Elas serão perdidas. Se quiser mantê-las, cancele e envie um backup <em>deste</em> aparelho para o outro.</p>' : '') +
+          '<p>Os dados atuais deste aparelho' + (localCount ? ' (' + localCount + ' lançamentos)' : '') + ' serão <strong>substituídos</strong>.</p>' });
       if (!ok) return;
       await Store.importData(obj);
       this.go('#inicio'); this.render(); this.toast('Backup restaurado.');
@@ -235,6 +268,40 @@
     },
     revokeOcr() { this.s.settings.ocrConsent = false; this.save(); }
   });
+
+  /* ---------------- Auxiliares de backup ---------------- */
+  function dateTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return isNaN(d) ? '—' : d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+  function shareSupported() {
+    try {
+      const probe = new File(['{}'], 'teste.txt', { type: 'text/plain' });
+      return !!(navigator.canShare && navigator.canShare({ files: [probe] }));
+    } catch (e) { return false; }
+  }
+  // Gera o arquivo de backup. Para compartilhar, alguns navegadores (ex.: Chrome no Android) não aceitam
+  // .json — nesse caso usa .txt com o mesmo conteúdo; a restauração aceita os dois.
+  async function backupFile(app, withPhotos, forShare) {
+    const data = await Store.exportData(withPhotos);
+    const text = JSON.stringify(data, null, 1);
+    const base = 'backup-financas-' + app.today() + (withPhotos ? '-com-fotos' : '');
+    let file = new File([text], base + '.json', { type: 'application/json' });
+    if (forShare && navigator.canShare && !navigator.canShare({ files: [file] })) {
+      file = new File([text], base + '.txt', { type: 'text/plain' });
+    }
+    return file;
+  }
+  function downloadFile(file) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(file);
+    a.download = file.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  // Registrar o backup não conta como "alteração dos dados".
+  function markBackup(app) { app.s.settings.lastBackup = new Date().toISOString(); Store.save(); app.render(); }
 
   function goalMove(app, id, sign) {
     const g = app.s.goals.find((x) => x.id === id);

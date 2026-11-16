@@ -19,7 +19,9 @@
     today() { return Calc.todayISO(); },
     curMonth() { return Calc.ymOf(Calc.todayISO()); },
 
-    save() { Store.save(); this.render(); },
+    // Toda alteração feita pela pessoa registra a data, para comparar com backups na hora de restaurar.
+    save() { this.s.updatedAt = new Date().toISOString(); Store.save(); this.render(); },
+    BACKUP_ACCEPT: 'application/json,.json,text/plain,.txt',
     cat(id) { return this.s.categories.find((c) => c.id === id) || this.s.categories.find((c) => c.id === 'outros') || { id: 'outros', name: 'Outros', icon: '📦', color: '#a0a7b4' }; },
     card(id) { return this.s.cards.find((c) => c.id === id); },
     loan(id) { return this.s.loans.find((l) => l.id === id); },
@@ -79,7 +81,8 @@
         '<div class="stack">' +
         '<button class="btn primary block" data-act="startDemo">Ver com dados de exemplo</button>' +
         '<button class="btn block" data-act="startEmpty">Começar do zero</button>' +
-        '<label class="btn ghost block">Restaurar um backup<input type="file" accept="application/json,.json" hidden data-import></label>' +
+        '<label class="btn ghost block">Restaurar um backup<input type="file" accept="' + this.BACKUP_ACCEPT + '" hidden data-import></label>' +
+        '<p class="muted tiny">Já usa em outro aparelho? Lá, vá em Mais → Backup e dados → <strong>Enviar para outro aparelho</strong> e depois restaure o arquivo aqui.</p>' +
         '</div></section>';
       U.$('#fab').hidden = true;
       U.$('.month-nav').hidden = true;

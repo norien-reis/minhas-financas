@@ -58,6 +58,19 @@ O app só pode ser **instalado** e funcionar **offline** quando é aberto por **
 - O armazenamento local **não é criptografado nem protegido por senha**. Quem usa o aparelho desbloqueado pode ver os dados. Use o bloqueio de tela.
 - Em *Mais → Backup e dados* há um botão para pedir ao navegador que não apague os dados automaticamente (`navigator.storage.persist`).
 
+## Usar no notebook e no celular
+
+Os dados **não sincronizam sozinhos**: cada navegador guarda os seus. Para levar de um aparelho para o outro:
+
+1. No aparelho com os dados mais novos: **Mais → Backup e dados → Enviar para outro aparelho**. Abre o menu de compartilhamento do sistema (WhatsApp, Drive, e-mail). Se o navegador não tiver esse menu, o arquivo é baixado.
+2. No outro aparelho: **Mais → Backup e dados → Restaurar backup** (ou *Restaurar um backup* na tela de boas-vindas) e escolha o arquivo.
+
+Detalhes:
+- No Android, o Chrome não compartilha arquivos `.json`, então o backup vai como `.txt` com o mesmo conteúdo. A restauração aceita os dois formatos.
+- Restaurar **substitui** os dados do aparelho; não junta. Se o aparelho tiver alterações mais recentes que o backup, o app avisa antes.
+- Recomendação: cadastrar em **um aparelho principal** e usar o outro para consulta.
+- A tela inicial lembra de fazer backup quando há alterações e o último backup tem mais de 7 dias.
+
 ## Backup
 
 *Mais → Backup e dados*:
