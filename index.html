@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Minhas Finanças</title>
+  <meta name="description" content="Controle financeiro pessoal simples, local e sem julgamentos.">
+  <meta name="theme-color" content="#4f6bdc">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Finanças">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><img src="icons/icon.svg" alt="" width="28" height="28"><span>Minhas Finanças</span></div>
+    <div class="month-nav" aria-label="Mês">
+      <button class="icon-btn" data-act="prevMonth" aria-label="Mês anterior">‹</button>
+      <button class="month-label" data-act="pickMonth" id="month-label" aria-label="Escolher mês"></button>
+      <button class="icon-btn" data-act="nextMonth" aria-label="Próximo mês">›</button>
+      <button class="btn tiny ghost" id="month-today" data-act="todayMonth" hidden>Hoje</button>
+    </div>
+  </header>
+
+  <main id="main" class="main" tabindex="-1"></main>
+
+  <button id="fab" class="fab" data-act="addExpense" hidden><span aria-hidden="true">+</span> Adicionar gasto</button>
+
+  <nav class="tabbar" aria-label="Navegação principal">
+    <a href="#inicio" data-tab="inicio"><span aria-hidden="true">🏠</span>Início</a>
+    <a href="#movimentos" data-tab="movimentos"><span aria-hidden="true">🧾</span>Lançamentos</a>
+    <a href="#cartoes" data-tab="cartoes"><span aria-hidden="true">💳</span>Cartões</a>
+    <a href="#dividas" data-tab="dividas"><span aria-hidden="true">🏦</span>Dívidas</a>
+    <a href="#mais" data-tab="mais"><span aria-hidden="true">☰</span>Mais</a>
+  </nav>
+
+  <noscript><p style="padding:20px">Esta ferramenta precisa de JavaScript ativado.</p></noscript>
+
+  <script src="js/calc.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/ocr.js"></script>
+  <script src="js/demo.js"></script>
+  <script src="js/forms.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/views-home.js"></script>
+  <script src="js/views-entries.js"></script>
+  <script src="js/views-cards.js"></script>
+  <script src="js/views-debts.js"></script>
+  <script src="js/views-more.js"></script>
+</body>
+</html>
