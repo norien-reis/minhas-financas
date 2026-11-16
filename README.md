@@ -11,6 +11,22 @@ Aplicação web responsiva com aparência de aplicativo (PWA) para acompanhar sa
 | Regras (parcelas, fatura, consignado) | Fórmulas frágeis, fáceis de quebrar | Regras testadas em código (`js/calc.js` + testes) |
 | Manutenção | Fácil de editar, difícil de evoluir | Arquivos simples, sem build e sem dependências instaladas |
 
+## Endereço publicado
+
+**https://norien-reis.github.io/minhas-financas/** (GitHub Pages, com https)
+
+Abra no celular e use *Adicionar à tela inicial*. Só os arquivos do app ficam no GitHub. Seus lançamentos ficam no navegador de cada aparelho.
+
+### Como atualizar o app publicado
+
+Depois de alterar os arquivos nesta pasta:
+
+```bash
+git add -A && git commit -m "descrição da mudança" && git push
+```
+
+O GitHub Pages republica em 1–2 minutos. No celular, feche e abra o app duas vezes para pegar a versão nova.
+
 ## Como executar
 
 Não precisa instalar nada além de um servidor de arquivos estáticos. Na pasta do projeto:
